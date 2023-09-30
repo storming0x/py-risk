@@ -9,8 +9,7 @@ def get_risk_data(chainId=1):
 
     return data_matrix
 
-# TODO: fetch data from ydaemon and aggregate into risk groups to create data matrix
-# TODO: use yearn watch logic to do the aggregation
+# DEV: sample data to use for plotting
 def get_risk_data_hardcoded(chainid=1):
     data_matrix = [
         ["", "Convex", "", "", ""],
