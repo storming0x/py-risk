@@ -1,10 +1,28 @@
+from typing import Optional
 import typer
 import matplotlib.pyplot as plt
 import numpy as np
 
-app = typer.Typer()
+from pyrisk.risk_data import get_risk_data
 
-def create_heatmap(data, color_backgrounds):
+def show_heatmap(chain_id=1) -> None:
+    # Define data matrix and color mapping
+    color_matrix = [
+        [1, 1, 2, 2, 2],
+        [0, 1, 1, 2, 2],
+        [0, 0, 1, 1, 2],
+        [0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 1],
+    ]
+    
+    data_matrix = get_risk_data(chain_id)
+    # Define row and column labels
+    row_labels = ["Row 1", "Row 2", "Row 3", "Row 4", "Row 5"]
+    column_labels = ["Rare", "Unlikely", "Even Chance", "Likely", "Almost Certain"]
+
+    create_heatmap(data_matrix, color_matrix, row_labels, column_labels)
+
+def create_heatmap(data, color_backgrounds, row_labels, column_labels) -> None:
     try:
         # Define colors (Green, Yellow, Red)
         color_mapping = {
@@ -37,8 +55,22 @@ def create_heatmap(data, color_backgrounds):
                     color = color_mapping["Red"]
                 r, g, b = [c / 255 for c in color]
 
-                ax.add_patch(plt.Rectangle((j, len(data) - 1 - i), 1, 1, fill=True, color=(r, g, b)))
+                # Draw the cell with borders
+                cell = plt.Rectangle((j, len(data) - 1 - i), 1, 1, fill=True, color=(r, g, b), edgecolor='black')
+                ax.add_patch(cell)
                 ax.text(j + 0.5, len(data) - 1 - i + 0.5, cell_text, ha='center', va='center', fontsize=10, color='black')
+
+        # Add lines separating each cell on the inside
+        for i in range(1, len(data[0])):
+            ax.axvline(i, color='black', linewidth=2)
+        for i in range(1, len(data)):
+            ax.axhline(i, color='black', linewidth=2)
+
+        # Set tick labels for Y and X axes
+        ax.set_xticks(np.arange(len(data[0])) + 0.5)
+        ax.set_yticks(np.arange(len(data)) + 0.5)
+        ax.set_xticklabels(column_labels, rotation=90)
+        ax.set_yticklabels(row_labels)
 
         # Hide axis labels
         ax.axis('off')
@@ -50,37 +82,6 @@ def create_heatmap(data, color_backgrounds):
         typer.echo(f"Error: {e}")
         raise typer.Abort()
 
-@app.command()
-def heatmap():
-    """
-    Show risk heatmap for yearn strategy groups
-    """
-    # Define data matrix and color mapping
-    data_matrix = [
-        [["string1", "string2", "string3"], "string2", "string3", "string4", "string5"],
-        ["string6", "string7", "string8", "string9", "string10"],
-        ["string11", "string12", "string13", "string14", "string15"],
-        ["string16", "string17", "string18", "string19", "string20"],
-        ["string21", "string22", "string23", "string24", "string25"],
-    ]
 
-    color_matrix = [
-        [1, 1, 2, 2, 2],
-        [0, 1, 1, 2, 2],
-        [0, 0, 1, 1, 2],
-        [0, 0, 0, 1, 1],
-        [0, 0, 0, 0, 1],
-    ]
 
-    create_heatmap(data_matrix, color_matrix)
-
-@app.command(name="strategy")
-def strategy_data():
-    """
-    List information about a specific strategy
-    """
-    print("Strategy Data")
-
-if __name__ == "__main__":
-    app()
 
