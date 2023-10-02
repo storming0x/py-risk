@@ -1,10 +1,10 @@
 """This module provides the command line interface for the py_risk package."""
 # pyrisk/cli.py
+import typer
 
 from pyrisk.heatmap import show_heatmap
+from pyrisk.network import Network, NetworkLabels
 from typing import Optional
-
-import typer
 
 from pyrisk import __app_name__, __version__
 
@@ -27,8 +27,12 @@ def main(
     return None
 
 @app.command()
-def heatmap():
+def heatmap(
+      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
+
+):
     """
     Show risk heatmap for yearn strategy groups
     """
-    show_heatmap()
+    network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
+    show_heatmap(network_choice.value)

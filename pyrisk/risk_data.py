@@ -1,6 +1,8 @@
 import requests
 import time
+import json
 
+# Dev note: currently using ydaemon API plan to use subgraph + onchain contracts for v3 support too
 def get_risk_data(chainId=1):
     url = f"https://ydaemon.yearn.fi/{chainId}/vaults/all?classification=all&strategiesDetails=withDetails"
     response = requests.get(url)
@@ -28,7 +30,7 @@ def process_data(data):
     for vault in data:
         for strategy in vault.get("strategies", []):
             risk_group = strategy.get("risk", {}).get("riskGroup")
-            
+
             if risk_group:
                 risk_group = risk_group.lower().replace(" ", "")
                 if risk_group not in risk_groups:
@@ -42,16 +44,16 @@ def process_data(data):
                         "medianScore": 0,
                         "impactScore": 0,
                         "urlParams": "",
-                        "auditScore": strategy.get("risk", {}).get("auditScore", 0),
-                        "codeReviewScore": strategy.get("risk", {}).get("codeReviewScore", 0),
-                        "testingScore": strategy.get("risk", {}).get("testingScore", 0),
-                        "protocolSafetyScore": strategy.get("risk", {}).get("protocolSafetyScore", 0),
-                        "complexityScore": strategy.get("risk", {}).get("complexityScore", 0),
-                        "teamKnowledgeScore": strategy.get("risk", {}).get("teamKnowledgeScore", 0),
+                        "auditScore": strategy.get("risk", {}).get("riskDetails", {}).get("auditScore", 0),
+                        "codeReviewScore": strategy.get("risk", {}).get("riskDetails", {}).get("codeReviewScore", 0),
+                        "testingScore": strategy.get("risk", {}).get("riskDetails", {}).get("testingScore", 0),
+                        "protocolSafetyScore": strategy.get("risk", {}).get("riskDetails", {}).get("protocolSafetyScore", 0),
+                        "complexityScore": strategy.get("risk", {}).get("riskDetails", {}).get("complexityScore", 0),
+                        "teamKnowledgeScore": strategy.get("risk", {}).get("riskDetails", {}).get("teamKnowledgeScore", 0),
                     }
                 
-                risk_groups[risk_group]["totalDebtRatio"] += strategy.get("details", {}).get("totalDebtUSDC", 0)
-                risk_groups[risk_group]["tvl"] += strategy.get("details", {}).get("totalDebtUSDC", 0)
+                currentTVL = strategy.get("risk", {}).get("allocation", {}).get("currentTVL", 0)
+                risk_groups[risk_group]["tvl"] += currentTVL
                 risk_groups[risk_group]["strategiesCount"] += 1
                 risk_groups[risk_group]["strategies"].append(strategy)
                 
@@ -72,10 +74,9 @@ def process_data(data):
         ])
         risk_group["tvlImpact"] = get_tvl_impact(risk_group["tvl"])
         risk_group["impactScore"] = get_impact_score(risk_group["tvlImpact"], risk_group["medianScore"])
-        #risk_group["urlParams"] = get_exclude_include_url_params(risk_group["criteria"])
     
-    data_matrix = create_data_matrix(list(risk_groups.values()))
-    print(data_matrix)
+    data_matrix = create_data_matrix(risk_groups.values())
+  
     return data_matrix
 
 
@@ -167,3 +168,16 @@ def get_tvl_impact(tvl):
     if tvl < 100_000_000:
         return 4
     return 5
+
+
+def save_to_json(data, filename):
+    """
+    Save data to a JSON file.
+
+    Args:
+        data: The data to be saved (should be JSON-serializable).
+        filename (str): The name of the output JSON file.
+    """
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+    print(f"Data saved to {filename}")

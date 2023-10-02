@@ -33,8 +33,12 @@ pyrisk [command] --help
 To show the risk map for the ethereum network (chain id = 1) you can use the following command
 
 ```bash
-pyrisk heatmap -c 1
+pyrisk heatmap --network ethereum
 ```
+
+
+TODO
+
 To show information about a specific strategy. Supports v2 and v3 strategies.
 
 ```bash
