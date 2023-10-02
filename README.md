@@ -35,8 +35,6 @@ To show the risk map for the ethereum network (chain id = 1) you can use the fol
 ```bash
 pyrisk heatmap --network ethereum
 ```
-Example ![Risk Heatmap](https://github.com/storming0x/py-risk/assets/6074987/8bd2f3f8-71ef-44a1-835f-0b4058003baf)
-
 
 TODO
 
