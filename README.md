@@ -30,7 +30,7 @@ To get help on pyrisk usage on any command you can use
 pyrisk [command] --help
 ```
 
-To show the risk map for the ethereum network (chain id = 1) you can use the following command
+To generate an HTML file with the risk map graph for the ethereum network (chain id = 1) you can use the following command. Check help for other supported networks.
 
 ```bash
 pyrisk heatmap --network ethereum
