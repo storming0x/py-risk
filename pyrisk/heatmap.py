@@ -57,6 +57,7 @@ def show_heatmap(chain_id=1) -> None:
         filename = f'heatmap_chain_{chain_id}_{current_time}.html'
 
         chart.save(filename)
+        typer.echo(f"Saved risk map chart to {filename}")
 
 
     except Exception as e:

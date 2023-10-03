@@ -34,6 +34,6 @@ setup(
     ],
     entry_points = '''
         [console_scripts]
-        pyrisk=pyrisk:cli
+        pyrisk=pyrisk:app
     '''
 )
