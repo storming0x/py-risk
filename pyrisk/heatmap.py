@@ -1,4 +1,5 @@
 from typing import Optional
+import datetime
 import typer
 import altair as alt
 import pandas as pd
@@ -50,7 +51,13 @@ def show_heatmap(chain_id=1) -> None:
             )
         )
 
-        heat + text
+        chart = heat + text
+        # Get the current time with timezone information
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        filename = f'heatmap_chain_{chain_id}_{current_time}.html'
+
+        chart.save(filename)
+
 
     except Exception as e:
         typer.echo(f"Error: {e}")
