@@ -1,30 +1,35 @@
 import requests
-import time
+import diskcache as dc
 import json
+from pyrisk.utils import get_or_create_cli_dir_path, current_timestamp
+
+cli_directory = get_or_create_cli_dir_path()
+# Create a disk-based cache on 10 minutes
+cache_group = dc.Cache(cli_directory, expire=600) 
 
 # Dev note: currently using ydaemon API plan to use subgraph + onchain contracts for v3 support too
-def get_risk_data(chainId=1):
+def get_risk_group_data(chainId=1, force_refresh=False):
+    if force_refresh:
+        # If force_refresh is True, clear the cache
+        cache_group.clear()
+
+    # Check if the data is in the cache
+    cache_key = str(chainId)  # Convert the chainId to a string for the cache key
+    if cache_key in cache_group:
+        return cache_group[cache_key]
+
+    # If not in cache, fetch the data
     url = f"https://ydaemon.yearn.fi/{chainId}/vaults/all?classification=all&strategiesDetails=withDetails"
     response = requests.get(url)
     risk_data = response.json()
-    data_matrix = process_data(risk_data)
 
-    return data_matrix
+    # Store the data in the cache
+    cache_group[cache_key] = risk_data
 
-# DEV: sample data to use for plotting
-def get_risk_data_hardcoded(chainid=1):
-    data_matrix = [
-        ["", "Convex", "", "", ""],
-        ["", ["Curve", "Generic Lev Comp", "Single Sided"], "", "", ""],
-        ["", ["AAVE Lender Borrower", "Router Strategy", "stETH Accumulator", "yvBoost", "Notional Lending"], "Gen Lender", "Angle Protocol", ""],
-        ["","Single Sided Balancer v3",["Maker", "Synthethix", "Strategy Tokemak", "88mph deposit"], "Stargate", ""],
-        ["", ["Maker V2", "Idle", "Alpha Homora v2"], "Vesper", "Inverse", ""],
-    ]
-
-    return data_matrix
+    return risk_data
 
 # Function to process data and group into risk groups
-def process_data(data):
+def map_group_to_matrix(data):
     risk_groups = {}
     
     for vault in data:
@@ -79,9 +84,6 @@ def process_data(data):
   
     return data_matrix
 
-
-
-
 def create_data_matrix(groups):
     data_matrix = [
         ["", "", "", "", ""],
@@ -134,9 +136,6 @@ def get_impact_score(impact, likelihood):
     score = scores[impact_index][likelihood_index]
     
     return score
-
-def current_timestamp():
-    return int(time.time() * 1000)
 
 def get_longevity_score(days):
     """

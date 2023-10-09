@@ -1,4 +1,5 @@
 import typer
+import time
 
 from pyrisk.heatmap import show_heatmap
 from pyrisk.network import Network, NetworkLabels
@@ -33,5 +34,12 @@ def heatmap(
     """
     Show heatmap for yearn risk groups on a given network
     """
+
+    start_time = time.time()
+
     network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
     show_heatmap(network_choice.value)
+
+    end_time = time.time()
+
+    print(f"Heatmap time elapsed: {end_time - start_time} seconds")

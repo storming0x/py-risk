@@ -3,12 +3,13 @@ import datetime
 import typer
 import altair as alt
 import pandas as pd
-from pyrisk.risk_data import get_risk_data
+from pyrisk.group_utils import get_risk_group_data, map_group_to_matrix
 
 def show_heatmap(chain_id=1) -> None:
     try:
-        # Get risk data
-        data = get_risk_data(chain_id)
+        # Get and map risk data for heatmap
+        group_data = get_risk_group_data(chain_id)
+        data = map_group_to_matrix(group_data)
         
         # Define data matrix and color mapping
         color_matrix = [
