@@ -3,10 +3,16 @@ import datetime
 import typer
 import altair as alt
 import pandas as pd
+import webbrowser
+import os
 from rich.table import Table
+from rich import print as rprint
+from rich.layout import Layout
+from rich.panel import Panel
+
 from pyrisk.network import Network
 from pyrisk.group_utils import get_risk_group_data, create_data_matrix
-from pyrisk.utils import cprint, save_to_json
+from pyrisk.utils import cprint
 
 def list_groups(chain_id:int=1) -> None:
     cprint(f"\nLoading groups for chain {Network.get_label(chain_id)}...", style='text')
@@ -30,6 +36,23 @@ def list_groups(chain_id:int=1) -> None:
         cprint(f"\nError: {e}", style='error')
         raise typer.Abort()
     return None
+
+def show_group_info(group:str, chain_id:int=1) -> None:
+    layout = Layout()
+    layout.split_column(
+        Layout(name="upper"),
+        Layout(name="lower")
+    )
+    layout["lower"].split_row(
+        Layout(name="left"),
+        Layout(name="right"),
+    )
+    layout["right"].split(
+        Layout(Panel("Hello")),
+        Layout(Panel("World!"))
+    )
+    rprint(layout)
+    cprint(f"\nLoading {group} information on chain {Network.get_label(chain_id)}...", style='text')
 
 def show_heatmap(chain_id:int=1) -> None:
     try:
@@ -81,10 +104,16 @@ def show_heatmap(chain_id:int=1) -> None:
         chart = heat + text
         # Get the current time with timezone information
         current_time = datetime.datetime.now(datetime.timezone.utc)
-        filename = f'heatmap_chain_{chain_id}_{current_time}.html'
+        temp_f = f'heatmap_chain_{chain_id}_{current_time}'
+        filename = "".join(c if c.isalnum() or c in ['_', '-'] else '_' for c in temp_f)
+        filename += ".html"
 
         chart.save(filename)
-        cprint(f"\nSaved risk map chart to {filename}", style='text')
+        cprint(f"\nOpening risk map chart {filename} on browser ", style='text')
+        cprint(f"\nIf the chart does not open automatically, please open it manually in your browser", style='info')
+        cprint(f"path: {os.path.abspath(filename)}", style='text')
+        webbrowser.open(f"file://{os.path.abspath(filename)}")
+        
 
 
     except Exception as e:

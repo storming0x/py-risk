@@ -1,5 +1,5 @@
 import typer
-from pyrisk.group import show_heatmap, list_groups
+from pyrisk.group import show_heatmap, list_groups, show_group_info
 from pyrisk.utils import show_spinner
 from pyrisk.network import Network, NetworkLabels
 from typing import Optional
@@ -26,7 +26,8 @@ def info(
     """
     Show information for risk group
     """
-    print(f"TBD: Showing info for risk group {group} on {network}")
+    network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
+    show_group_info(group, network_choice.value)
 
 
 
