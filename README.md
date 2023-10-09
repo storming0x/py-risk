@@ -30,10 +30,22 @@ To get help on pyrisk usage on any command you can use
 pyrisk [command] --help
 ```
 
-To generate an HTML file with the risk map graph for the ethereum network (chain id = 1) you can use the following command. Check help for other supported networks.
+List all risk groups in the ethereum network
 
 ```bash
-pyrisk heatmap --network ethereum
+pyrisk group list --network ethereum
+```
+
+Show detail information about a risk group
+
+```bash
+pyrisk group info <group-name> --network ethereum
+```
+
+To generate an HTML file with the risk group map graph for the ethereum network (chain id = 1) you can use the following command. Check help for other supported networks.
+
+```bash
+pyrisk group heatmap --network ethereum
 ```
 
 TODO
@@ -41,13 +53,13 @@ TODO
 To show information about a specific strategy. Supports v2 and v3 strategies.
 
 ```bash
-pyrisk strategy [OPTIONS]
+pyrisk strategy <strategy-address> [OPTIONS]
 ```
 
 To show information about a specific vault. Supports v2 and v3 Tokenized Strategies and Meta Vaults.
 
 ```bash
-pyrisk vault [OPTIONS]
+pyrisk vault <vault-address> [OPTIONS]
 ```
 
 ## Development

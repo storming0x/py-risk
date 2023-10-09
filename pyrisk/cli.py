@@ -1,9 +1,8 @@
 """This module provides the command line interface for the py_risk package."""
 # pyrisk/cli.py
 import typer
+from pyrisk import group_cli
 
-from pyrisk.heatmap import show_heatmap
-from pyrisk.network import Network, NetworkLabels
 from typing import Optional
 
 from pyrisk import __app_name__, __version__
@@ -14,6 +13,8 @@ def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f"{__app_name__} version {__version__}")
         raise typer.Exit()
+    
+app.add_typer(group_cli.app, name="group", help="Commands for interacting with Yearn's Risk Groups")
     
 @app.callback()
 def main(
@@ -26,13 +27,5 @@ def main(
     """
     return None
 
-@app.command()
-def heatmap(
-      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
 
-):
-    """
-    Show risk heatmap for yearn strategy groups
-    """
-    network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
-    show_heatmap(network_choice.value)
+
