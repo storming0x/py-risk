@@ -7,11 +7,19 @@ class Network(Enum):
     ARBITRUM_ONE = 42161
     # POLYGON = 137
 
+    @classmethod
+    def get_label(cls, desired_value):
+        for network in cls:
+            if network.value == desired_value:
+                return network.name
+        return None
+
 class NetworkLabels(str, Enum):
     ETHEREUM = "ethereum"
     OPTIMISM = "optimism"
     FANTOM = "fantom"
     ARBITRUM_ONE = "arbitrum_one"
+
 
 
 # Custom callback function to convert string input to enum value

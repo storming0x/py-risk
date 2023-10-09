@@ -3,12 +3,39 @@ import datetime
 import typer
 import altair as alt
 import pandas as pd
-from pyrisk.risk_data import get_risk_data
+from rich.table import Table
+from pyrisk.network import Network
+from pyrisk.group_utils import get_risk_group_data, create_data_matrix
+from pyrisk.utils import cprint, save_to_json
 
-def show_heatmap(chain_id=1) -> None:
+def list_groups(chain_id:int=1) -> None:
+    cprint(f"\nLoading groups for chain {Network.get_label(chain_id)}...", style='text')
+    title = f"\nRisk Groups in {Network.get_label(chain_id)}"
+    table = Table(title=title)
+    table.add_column("Group", justify="left", style="cyan", no_wrap=True)
+    table.add_column("TVL (USDC)", justify="right", style="green")
+    table.add_column("Likelihood Avg. Score", justify="center", style="magenta")
+    table.add_column("Impact Score", justify="center", style="bold red")
+
     try:
-        # Get risk data
-        data = get_risk_data(chain_id)
+        group_data = get_risk_group_data(chain_id)
+        sorted_group_data = sorted(group_data.values(), key=lambda x: x['tvl'], reverse=True)
+        for group in sorted_group_data:
+            formatted_tvl = '{:,.2f}'.format(group['tvl'])  
+            table.add_row(group['label'], formatted_tvl, str(group['medianScore']), str(group['tvlImpact']))
+
+        cprint(table)
+          
+    except Exception as e:
+        cprint(f"\nError: {e}", style='error')
+        raise typer.Abort()
+    return None
+
+def show_heatmap(chain_id:int=1) -> None:
+    try:
+        # Get and map risk data for heatmap
+        groups = get_risk_group_data(chain_id)
+        data = create_data_matrix(groups.values())
         
         # Define data matrix and color mapping
         color_matrix = [
@@ -57,15 +84,11 @@ def show_heatmap(chain_id=1) -> None:
         filename = f'heatmap_chain_{chain_id}_{current_time}.html'
 
         chart.save(filename)
-        typer.echo(f"Saved risk map chart to {filename}")
+        cprint(f"\nSaved risk map chart to {filename}", style='text')
 
 
     except Exception as e:
-        typer.echo(f"Error: {e}")
+        cprint(f"\nError: {e}", style='error')
         raise typer.Abort()
 
     return None
-
-
-
-

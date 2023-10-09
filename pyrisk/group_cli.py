@@ -1,0 +1,43 @@
+import typer
+from pyrisk.group import show_heatmap, list_groups
+from pyrisk.utils import show_spinner
+from pyrisk.network import Network, NetworkLabels
+from typing import Optional
+
+app = typer.Typer()
+
+@app.command()
+@show_spinner("Working...")
+def list(
+     ctx: typer.Context,
+     network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
+):
+    """
+    List risk groups
+    """
+    network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
+    list_groups(network_choice.value)
+
+@app.command()
+def info(
+      group: str,
+      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
+):
+    """
+    Show information for risk group
+    """
+    print(f"TBD: Showing info for risk group {group} on {network}")
+
+
+
+@app.command()
+@show_spinner("Loading heatmap...")
+def heatmap(
+      ctx: typer.Context,
+      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
+):
+    """
+    Show heatmap for yearn risk groups on a given network
+    """
+    network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
+    show_heatmap(network_choice.value)

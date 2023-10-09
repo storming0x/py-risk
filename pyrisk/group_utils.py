@@ -1,30 +1,35 @@
 import requests
-import time
-import json
+import diskcache as dc
+import typing
+from pyrisk.utils import get_or_create_cli_dir_path, current_timestamp
+
+cli_directory = get_or_create_cli_dir_path()
+# Create a disk-based cache on 10 minutes
+cache_group = dc.Cache(cli_directory, expire=600) 
 
 # Dev note: currently using ydaemon API plan to use subgraph + onchain contracts for v3 support too
-def get_risk_data(chainId=1):
+def get_vaults_data(chainId:int, force_refresh=False):
+    if force_refresh:
+        # If force_refresh is True, clear the cache
+        cache_group.clear()
+
+    # Check if the data is in the cache
+    cache_key = str(chainId)  # Convert the chainId to a string for the cache key
+    if cache_key in cache_group:
+        return cache_group[cache_key]
+
+    # If not in cache, fetch the data
     url = f"https://ydaemon.yearn.fi/{chainId}/vaults/all?classification=all&strategiesDetails=withDetails"
     response = requests.get(url)
     risk_data = response.json()
-    data_matrix = process_data(risk_data)
 
-    return data_matrix
+    # Store the data in the cache
+    cache_group[cache_key] = risk_data
 
-# DEV: sample data to use for plotting
-def get_risk_data_hardcoded(chainid=1):
-    data_matrix = [
-        ["", "Convex", "", "", ""],
-        ["", ["Curve", "Generic Lev Comp", "Single Sided"], "", "", ""],
-        ["", ["AAVE Lender Borrower", "Router Strategy", "stETH Accumulator", "yvBoost", "Notional Lending"], "Gen Lender", "Angle Protocol", ""],
-        ["","Single Sided Balancer v3",["Maker", "Synthethix", "Strategy Tokemak", "88mph deposit"], "Stargate", ""],
-        ["", ["Maker V2", "Idle", "Alpha Homora v2"], "Vesper", "Inverse", ""],
-    ]
-
-    return data_matrix
+    return risk_data
 
 # Function to process data and group into risk groups
-def process_data(data):
+def map_risk_group_data(data):
     risk_groups = {}
     
     for vault in data:
@@ -75,12 +80,16 @@ def process_data(data):
         risk_group["tvlImpact"] = get_tvl_impact(risk_group["tvl"])
         risk_group["impactScore"] = get_impact_score(risk_group["tvlImpact"], risk_group["medianScore"])
     
-    data_matrix = create_data_matrix(risk_groups.values())
-  
-    return data_matrix
+    return risk_groups
 
+def get_risk_group_data(chainId:int, force_refresh=False):
+    # Get vaults data
+    vaults_data = get_vaults_data(chainId, force_refresh)
 
+    # Process data and group into risk groups
+    risk_group_data = map_risk_group_data(vaults_data)
 
+    return risk_group_data
 
 def create_data_matrix(groups):
     data_matrix = [
@@ -135,9 +144,6 @@ def get_impact_score(impact, likelihood):
     
     return score
 
-def current_timestamp():
-    return int(time.time() * 1000)
-
 def get_longevity_score(days):
     """
     5: Worst Score, new code, did not go to ape tax before
@@ -170,14 +176,3 @@ def get_tvl_impact(tvl):
     return 5
 
 
-def save_to_json(data, filename):
-    """
-    Save data to a JSON file.
-
-    Args:
-        data: The data to be saved (should be JSON-serializable).
-        filename (str): The name of the output JSON file.
-    """
-    with open(filename, 'w') as json_file:
-        json.dump(data, json_file, indent=4)
-    print(f"Data saved to {filename}")
