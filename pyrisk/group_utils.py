@@ -1,6 +1,6 @@
 import requests
 import diskcache as dc
-import json
+import typing
 from pyrisk.utils import get_or_create_cli_dir_path, current_timestamp
 
 cli_directory = get_or_create_cli_dir_path()
@@ -8,7 +8,7 @@ cli_directory = get_or_create_cli_dir_path()
 cache_group = dc.Cache(cli_directory, expire=600) 
 
 # Dev note: currently using ydaemon API plan to use subgraph + onchain contracts for v3 support too
-def get_risk_group_data(chainId=1, force_refresh=False):
+def get_vaults_data(chainId:int, force_refresh=False):
     if force_refresh:
         # If force_refresh is True, clear the cache
         cache_group.clear()
@@ -29,7 +29,7 @@ def get_risk_group_data(chainId=1, force_refresh=False):
     return risk_data
 
 # Function to process data and group into risk groups
-def map_group_to_matrix(data):
+def map_risk_group_data(data):
     risk_groups = {}
     
     for vault in data:
@@ -80,9 +80,16 @@ def map_group_to_matrix(data):
         risk_group["tvlImpact"] = get_tvl_impact(risk_group["tvl"])
         risk_group["impactScore"] = get_impact_score(risk_group["tvlImpact"], risk_group["medianScore"])
     
-    data_matrix = create_data_matrix(risk_groups.values())
-  
-    return data_matrix
+    return risk_groups
+
+def get_risk_group_data(chainId:int, force_refresh=False):
+    # Get vaults data
+    vaults_data = get_vaults_data(chainId, force_refresh)
+
+    # Process data and group into risk groups
+    risk_group_data = map_risk_group_data(vaults_data)
+
+    return risk_group_data
 
 def create_data_matrix(groups):
     data_matrix = [
@@ -169,14 +176,3 @@ def get_tvl_impact(tvl):
     return 5
 
 
-def save_to_json(data, filename):
-    """
-    Save data to a JSON file.
-
-    Args:
-        data: The data to be saved (should be JSON-serializable).
-        filename (str): The name of the output JSON file.
-    """
-    with open(filename, 'w') as json_file:
-        json.dump(data, json_file, indent=4)
-    print(f"Data saved to {filename}")

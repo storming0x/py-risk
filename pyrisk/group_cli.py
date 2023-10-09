@@ -1,5 +1,5 @@
 import typer
-from pyrisk.heatmap import show_heatmap
+from pyrisk.group import show_heatmap, list_groups
 from pyrisk.utils import show_spinner
 from pyrisk.network import Network, NetworkLabels
 from typing import Optional
@@ -7,13 +7,16 @@ from typing import Optional
 app = typer.Typer()
 
 @app.command()
+@show_spinner("Working...")
 def list(
-      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
+     ctx: typer.Context,
+     network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
 ):
     """
     List risk groups
     """
-    print(f"TBD: Listing risk groups for {network}")
+    network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
+    list_groups(network_choice.value)
 
 @app.command()
 def info(
