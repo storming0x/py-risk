@@ -4,6 +4,9 @@ import typer
 import altair as alt
 import pandas as pd
 from pyrisk.group_utils import get_risk_group_data, map_group_to_matrix
+from pyrisk.utils import get_console
+
+console = get_console()
 
 def show_heatmap(chain_id=1) -> None:
     try:
@@ -58,11 +61,11 @@ def show_heatmap(chain_id=1) -> None:
         filename = f'heatmap_chain_{chain_id}_{current_time}.html'
 
         chart.save(filename)
-        typer.echo(f"Saved risk map chart to {filename}")
+        console.print(f"\nSaved risk map chart to {filename}", style='text')
 
 
     except Exception as e:
-        typer.echo(f"Error: {e}")
+        console.print(f"Error: {e}", style='error')
         raise typer.Abort()
 
     return None

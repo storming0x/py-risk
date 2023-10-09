@@ -1,7 +1,6 @@
 import typer
-import time
-
 from pyrisk.heatmap import show_heatmap
+from pyrisk.utils import show_spinner
 from pyrisk.network import Network, NetworkLabels
 from typing import Optional
 
@@ -26,20 +25,16 @@ def info(
     """
     print(f"TBD: Showing info for risk group {group} on {network}")
 
-@app.command()
-def heatmap(
-      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
 
+
+@app.command()
+@show_spinner("Loading heatmap...")
+def heatmap(
+      ctx: typer.Context,
+      network:  NetworkLabels = NetworkLabels.ETHEREUM.value,
 ):
     """
     Show heatmap for yearn risk groups on a given network
     """
-
-    start_time = time.time()
-
     network_choice = Network[network.upper()]  # Convert input to uppercase for case-insensitive matching
     show_heatmap(network_choice.value)
-
-    end_time = time.time()
-
-    print(f"Heatmap time elapsed: {end_time - start_time} seconds")
