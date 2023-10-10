@@ -114,8 +114,6 @@ def show_heatmap(chain_id:int=1) -> None:
         cprint(f"path: {os.path.abspath(filename)}", style='text')
         webbrowser.open(f"file://{os.path.abspath(filename)}")
         
-
-
     except Exception as e:
         cprint(f"\nError: {e}", style='error')
         raise typer.Abort()

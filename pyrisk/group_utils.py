@@ -58,7 +58,9 @@ def map_risk_group_data(data):
                     }
                 
                 currentTVL = strategy.get("risk", {}).get("allocation", {}).get("currentTVL", 0)
-                risk_groups[risk_group]["tvl"] += currentTVL
+                # DEV: sanity check. all currentTVL aggregate from each strategies in the risk group should be the same
+                if currentTVL > risk_groups[risk_group]["tvl"]:
+                    risk_groups[risk_group]["tvl"] = currentTVL
                 risk_groups[risk_group]["strategiesCount"] += 1
                 risk_groups[risk_group]["strategies"].append(strategy)
                 
