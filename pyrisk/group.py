@@ -27,6 +27,8 @@ def list_groups(chain_id: int = 1, force_refresh=False) -> None:
     table.add_column("TVL (USDC)", justify="right", style="green")
     table.add_column("Likelihood Avg. Score", justify="center", style="magenta")
     table.add_column("Impact Score", justify="center", style="bold red")
+    table.add_column("Status", justify="center")
+    table.add_column("Strategies w/ Debt", justify="right")
 
     try:
         group_data = get_risk_group_data(chain_id, force_refresh)
@@ -35,11 +37,23 @@ def list_groups(chain_id: int = 1, force_refresh=False) -> None:
         )
         for group in sorted_group_data:
             formatted_tvl = "{:,.2f}".format(group["tvl"])
+            status_color = group["status"].lower()
+            status_emoji = f":{status_color}_circle:"
+            # Filter out strategies with 0 estimatedTotalAssets
+            filtered_strategies = list(
+                filter(
+                    lambda x: x.get("details", {}).get("totalDebt", 0) != "0",
+                    group["strategies"],
+                )
+            )
+            total_strategies = len(filtered_strategies)
             table.add_row(
                 group["label"],
                 formatted_tvl,
                 str(group["medianScore"]),
                 str(group["tvlImpact"]),
+                status_emoji,
+                str(total_strategies),
             )
 
         cprint(table)
@@ -50,16 +64,59 @@ def list_groups(chain_id: int = 1, force_refresh=False) -> None:
     return None
 
 
-def show_group_info(group_name: str, chain_id: int = 1, force_refresh=False) -> None:
+def list_group_strategies(group_id: str, chain_id: int = 1, force_refresh=False):
     print(
-        f"\nLoading information for risk group '{group_name}' on {Network.get_label(chain_id)}..."
+        f"\nLoading strategies for risk group '{group_id}' on {Network.get_label(chain_id)}..."
     )
     try:
         groups = get_risk_group_data(chain_id, force_refresh)
-        group = groups.get(group_name)
+        group = groups.get(group_id)
         if group is None:
             cprint(
-                f"\nError: information for group '{group_name}' not found on {Network.get_label(chain_id)}",
+                f"\nError: information for group '{group_id}' not found on {Network.get_label(chain_id)}",
+                style="error",
+            )
+            return None
+        else:
+            strategies = group["strategies"]
+            total_strategies = len(strategies)
+            # Sort the filtered strategies by totalDebt in descending order
+            sorted_strategies = sorted(
+                strategies,
+                key=lambda x: int(x.get("details", {}).get("totalDebt", 0)),
+                reverse=True,
+            )
+            table = Table(
+                title=f"Strategies in Risk Group '{group_id}' ({total_strategies})"
+            )
+            table.add_column("Name", justify="left", style="white", no_wrap=True)
+            table.add_column("Address", justify="left", style="white", no_wrap=True)
+            table.add_column("Total Debt", justify="right", style="white")
+            for strategy in sorted_strategies:
+                table.add_row(
+                    strategy["name"],
+                    strategy["address"],
+                    strategy.get("details", {}).get("totalDebt", 0),
+                )
+            cprint(table)
+
+    except Exception as e:
+        cprint(f"\nError: {e}", style="error")
+        raise typer.Abort()
+
+    return None
+
+
+def show_group_info(group_id: str, chain_id: int = 1, force_refresh=False) -> None:
+    print(
+        f"\nLoading information for risk group '{group_id}' on {Network.get_label(chain_id)}..."
+    )
+    try:
+        groups = get_risk_group_data(chain_id, force_refresh)
+        group = groups.get(group_id)
+        if group is None:
+            cprint(
+                f"\nError: information for group '{group_id}' not found on {Network.get_label(chain_id)}",
                 style="error",
             )
             return None
@@ -148,20 +205,18 @@ def show_heatmap(chain_id: int = 1, force_refresh=False) -> None:
 
 
 def _render_group_info_layout(group: Dict) -> None:
-    group_label = group["label"]
     strategies = group["strategies"]
-    strategy_count = len(strategies)
     layout = Layout()
 
-    footer_title = f"Strategies (Total: {strategy_count})"
     layout.split_column(Layout(name="header"), Layout(name="footer"))
     layout["header"].split_row(
         Layout(name="left"),
         Layout(name="right"),
     )
 
-    build_risk_scores_layout(group, layout)
-    build_impact_layout(group, layout)
+    _build_risk_scores_layout(group, layout)
+    _build_impact_layout(group, layout)
+    _build_strategies_layout(strategies, layout)
 
     # strategies has a table with 3 columns: name, address and totalEstimatedAssets
     table = Table(group["label"], title=f"Risk Group Info")
@@ -170,9 +225,11 @@ def _render_group_info_layout(group: Dict) -> None:
     rprint(layout)
 
 
-def build_risk_scores_layout(group, layout):
+def _build_risk_scores_layout(group, layout):
     group_label = group["label"]
-    risk_score_section_title = f"Risk Scores for [b]{group_label}[/b]"
+    risk_score_section_title = (
+        f"Yearn :blue_circle: Risk Scores for [b]{group_label}[/b]"
+    )
     grid = Table.grid(expand=True)
     grid.add_column(justify="left", ratio=1)
     grid.add_column(justify="center", ratio=1)
@@ -197,14 +254,49 @@ def build_risk_scores_layout(group, layout):
     layout["left"].update(header_panel)
 
 
-def build_impact_layout(group, layout):
+def _build_impact_layout(group, layout):
     impact_section_title = f"Impact for [b]{group['label']}[/b]"
     grid = Table.grid(expand=True)
     grid.add_column(justify="left", ratio=1)
     grid.add_column(justify="center", ratio=1)
     grid.add_row(f"[b]TVL[/b] :dollar:", format_currency(group["tvl"]))
     grid.add_row(f"[b]TVL Impact[/b] ", format_score(group["tvlImpact"]))
-    grid.add_row(f"[b]Impact Score[/b] ", format_score(group["impactScore"]))
+    status_color = group["status"].lower()
+    status_emoji = f":{status_color}_circle:"
+    grid.add_row(f"[b]Status[/b] ", status_emoji)
 
     header_panel = Panel(grid, title=impact_section_title, style="white on blue")
     layout["right"].update(header_panel)
+
+
+def _build_strategies_layout(strategies, layout):
+    # Filter the strategies with non-zero totalDebt
+    filtered_strategies = list(
+        filter(lambda x: x.get("details", {}).get("totalDebt", 0) != "0", strategies)
+    )
+
+    # Sort the filtered strategies by totalDebt in descending order
+    sorted_strategies = sorted(
+        filtered_strategies,
+        key=lambda x: int(x.get("details", {}).get("totalDebt", 0)),
+        reverse=True,
+    )
+
+    strategies_section_title = f"Strategies (Total {len(strategies)})"
+    table = Table(title="Strategies in Risk Group")
+
+    # Set a fixed width for the "Name" column (adjust the width as needed)
+    table.add_column("Name", justify="left", style="white", no_wrap=True)
+
+    table.add_column("Address", justify="left", style="white", no_wrap=True)
+    table.add_column("Total Debt", justify="right", style="white")
+
+    for strategy in sorted_strategies:
+        table.add_row(
+            strategy["name"],
+            strategy["address"],
+            strategy.get("details", {}).get("totalDebt", 0),
+        )
+
+    footer_panel = Panel(table, title=strategies_section_title, style="white on blue")
+    layout["footer"].update(footer_panel)

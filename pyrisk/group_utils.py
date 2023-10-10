@@ -6,11 +6,12 @@ from pyrisk.utils import get_or_create_cli_dir_path, current_timestamp
 
 cli_directory = get_or_create_cli_dir_path()
 # Create a disk-based cache on 10 minutes
-cache_group = dc.Cache(cli_directory, expire=600) 
+cache_group = dc.Cache(cli_directory, expire=600)
 
-# Dev note: currently using ydaemon API. 
-# Plan to migrate to subgraph + onchain contracts for v3 support soon 
-def get_vaults_data(chainId:int, force_refresh=False):
+
+# Dev note: currently using ydaemon API.
+# Plan to migrate to subgraph + onchain contracts for v3 support soon
+def get_vaults_data(chainId: int, force_refresh=False):
     if force_refresh:
         # If force_refresh is True, clear the cache
         cache_group.clear()
@@ -30,10 +31,11 @@ def get_vaults_data(chainId:int, force_refresh=False):
 
     return risk_data
 
+
 # Function to process data and group into risk groups
 def map_risk_group_data(data):
     risk_groups = {}
-    
+
     for vault in data:
         for strategy in vault.get("strategies", []):
             risk_group = strategy.get("risk", {}).get("riskGroup")
@@ -51,42 +53,76 @@ def map_risk_group_data(data):
                         "medianScore": 0,
                         "impactScore": 0,
                         "urlParams": "",
-                        "auditScore": strategy.get("risk", {}).get("riskDetails", {}).get("auditScore", 0),
-                        "codeReviewScore": strategy.get("risk", {}).get("riskDetails", {}).get("codeReviewScore", 0),
-                        "testingScore": strategy.get("risk", {}).get("riskDetails", {}).get("testingScore", 0),
-                        "protocolSafetyScore": strategy.get("risk", {}).get("riskDetails", {}).get("protocolSafetyScore", 0),
-                        "complexityScore": strategy.get("risk", {}).get("riskDetails", {}).get("complexityScore", 0),
-                        "teamKnowledgeScore": strategy.get("risk", {}).get("riskDetails", {}).get("teamKnowledgeScore", 0),
+                        "auditScore": strategy.get("risk", {})
+                        .get("riskDetails", {})
+                        .get("auditScore", 0),
+                        "codeReviewScore": strategy.get("risk", {})
+                        .get("riskDetails", {})
+                        .get("codeReviewScore", 0),
+                        "testingScore": strategy.get("risk", {})
+                        .get("riskDetails", {})
+                        .get("testingScore", 0),
+                        "protocolSafetyScore": strategy.get("risk", {})
+                        .get("riskDetails", {})
+                        .get("protocolSafetyScore", 0),
+                        "complexityScore": strategy.get("risk", {})
+                        .get("riskDetails", {})
+                        .get("complexityScore", 0),
+                        "teamKnowledgeScore": strategy.get("risk", {})
+                        .get("riskDetails", {})
+                        .get("teamKnowledgeScore", 0),
                     }
-                
-                currentTVL = strategy.get("risk", {}).get("allocation", {}).get("currentTVL", 0)
+
+                currentTVL = (
+                    strategy.get("risk", {}).get("allocation", {}).get("currentTVL", 0)
+                )
+                status_color = (
+                    strategy.get("risk", {})
+                    .get("allocation", {})
+                    .get("status", "green")
+                )
                 # DEV: sanity check. all currentTVL aggregate from each strategies in the risk group should be the same
                 if currentTVL > risk_groups[risk_group]["tvl"]:
                     risk_groups[risk_group]["tvl"] = currentTVL
                 risk_groups[risk_group]["strategiesCount"] += 1
                 risk_groups[risk_group]["strategies"].append(strategy)
-                
+                risk_groups[risk_group]["status"] = status_color
+
                 activation = strategy.get("details", {}).get("activation", 0)
-                if not risk_groups[risk_group]["oldestActivation"] or activation < risk_groups[risk_group]["oldestActivation"]:
+                if (
+                    not risk_groups[risk_group]["oldestActivation"]
+                    or activation < risk_groups[risk_group]["oldestActivation"]
+                ):
                     risk_groups[risk_group]["oldestActivation"] = activation
-    
+
     for risk_group in risk_groups.values():
-        risk_group["longevityScore"] = 5 if not risk_group["strategies"] else get_longevity_score((current_timestamp() - risk_group["oldestActivation"]) / 86400)
-        risk_group["medianScore"] = median([
-            risk_group["auditScore"],
-            risk_group["codeReviewScore"],
-            risk_group["testingScore"],
-            risk_group["protocolSafetyScore"],
-            risk_group["complexityScore"],
-            risk_group["teamKnowledgeScore"],
-            risk_group["longevityScore"]
-        ])
+        risk_group["longevityScore"] = (
+            5
+            if not risk_group["strategies"]
+            else get_longevity_score(
+                (current_timestamp() - risk_group["oldestActivation"]) / 86400
+            )
+        )
+        risk_group["medianScore"] = median(
+            [
+                risk_group["auditScore"],
+                risk_group["codeReviewScore"],
+                risk_group["testingScore"],
+                risk_group["protocolSafetyScore"],
+                risk_group["complexityScore"],
+                risk_group["teamKnowledgeScore"],
+                risk_group["longevityScore"],
+            ]
+        )
         risk_group["tvlImpact"] = get_tvl_impact(risk_group["tvl"])
-        risk_group["impactScore"] = get_impact_score(risk_group["tvlImpact"], risk_group["medianScore"])
-    
+        risk_group["impactScore"] = get_impact_score(
+            risk_group["tvlImpact"], risk_group["medianScore"]
+        )
+
     return risk_groups
 
-def get_risk_group_data(chainId:int, force_refresh=False):
+
+def get_risk_group_data(chainId: int, force_refresh=False):
     # Get vaults data
     vaults_data = get_vaults_data(chainId, force_refresh)
 
@@ -95,13 +131,14 @@ def get_risk_group_data(chainId:int, force_refresh=False):
 
     return risk_group_data
 
+
 def create_data_matrix(groups: Dict):
     data_matrix = [
         ["", "", "", "", ""],
         ["", "", "", "", ""],
         ["", "", "", "", ""],
         ["", "", "", "", ""],
-        ["", "", "", "", ""]
+        ["", "", "", "", ""],
     ]
 
     for group in groups:
@@ -118,35 +155,38 @@ def create_data_matrix(groups: Dict):
 
     return data_matrix
 
+
 def median(values):
     if not values:
         return 0
-    
+
     values.sort()
     middle = len(values) // 2
-    
+
     if len(values) % 2 == 1:
         return values[middle]
     else:
         return (values[middle - 1] + values[middle]) / 2.0
 
-def get_impact_score(impact: int, likelihood:int):
+
+def get_impact_score(impact: int, likelihood: int):
     scores = [
         [1, 1, 2, 2, 2],
         [0, 1, 1, 2, 2],
         [0, 0, 1, 1, 2],
         [0, 0, 0, 1, 1],
-        [0, 0, 0, 0, 1]
+        [0, 0, 0, 0, 1],
     ]
-    
+
     if impact == 0:
         impact = 1
-    
+
     impact_index = len(scores) - impact
     likelihood_index = likelihood - 1
     score = scores[impact_index][likelihood_index]
-    
+
     return score
+
 
 def get_longevity_score(days: int):
     """
@@ -166,6 +206,7 @@ def get_longevity_score(days: int):
         return 2
     return 1
 
+
 def get_tvl_impact(tvl: float):
     if tvl == 0:
         return 0
@@ -179,7 +220,8 @@ def get_tvl_impact(tvl: float):
         return 4
     return 5
 
-def format_score(score:int):
+
+def format_score(score: int):
     style = "white"
     if score == 0:
         return "N/A"

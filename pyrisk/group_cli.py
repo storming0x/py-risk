@@ -1,5 +1,10 @@
 import typer
-from pyrisk.group import show_heatmap, list_groups, show_group_info
+from pyrisk.group import (
+    show_heatmap,
+    list_groups,
+    show_group_info,
+    list_group_strategies,
+)
 from pyrisk.display_utils import show_spinner
 from pyrisk.network import Network, NetworkLabels
 from typing import Optional
@@ -26,7 +31,7 @@ def list(
 @show_spinner("Loading...")
 def info(
     ctx: typer.Context,
-    group_name: str,
+    group_id: str,
     network: NetworkLabels = NetworkLabels.ETHEREUM.value,
 ):
     """
@@ -35,7 +40,23 @@ def info(
     network_choice = Network[
         network.upper()
     ]  # Convert input to uppercase for case-insensitive matching
-    show_group_info(group_name, network_choice.value)
+    show_group_info(group_id, network_choice.value)
+
+
+@app.command()
+@show_spinner("Loading...")
+def strats(
+    ctx: typer.Context,
+    group_id: str,
+    network: NetworkLabels = NetworkLabels.ETHEREUM.value,
+):
+    """
+    Show all strategies for a risk group
+    """
+    network_choice = Network[
+        network.upper()
+    ]  # Convert input to uppercase for case-insensitive matching
+    list_group_strategies(group_id, network_choice.value)
 
 
 @app.command()
