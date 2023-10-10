@@ -61,7 +61,7 @@ def strats(
 
 @app.command()
 @show_spinner("Loading heatmap...")
-def heatmap(
+def map(
     ctx: typer.Context,
     network: NetworkLabels = NetworkLabels.ETHEREUM.value,
 ):
