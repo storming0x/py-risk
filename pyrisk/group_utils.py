@@ -1,13 +1,15 @@
 import requests
 import diskcache as dc
-import typing
+from typing import Dict
+from rich.text import Text
 from pyrisk.utils import get_or_create_cli_dir_path, current_timestamp
 
 cli_directory = get_or_create_cli_dir_path()
 # Create a disk-based cache on 10 minutes
 cache_group = dc.Cache(cli_directory, expire=600) 
 
-# Dev note: currently using ydaemon API plan to use subgraph + onchain contracts for v3 support too
+# Dev note: currently using ydaemon API. 
+# Plan to migrate to subgraph + onchain contracts for v3 support soon 
 def get_vaults_data(chainId:int, force_refresh=False):
     if force_refresh:
         # If force_refresh is True, clear the cache
@@ -93,7 +95,7 @@ def get_risk_group_data(chainId:int, force_refresh=False):
 
     return risk_group_data
 
-def create_data_matrix(groups):
+def create_data_matrix(groups: Dict):
     data_matrix = [
         ["", "", "", "", ""],
         ["", "", "", "", ""],
@@ -128,7 +130,7 @@ def median(values):
     else:
         return (values[middle - 1] + values[middle]) / 2.0
 
-def get_impact_score(impact, likelihood):
+def get_impact_score(impact: int, likelihood:int):
     scores = [
         [1, 1, 2, 2, 2],
         [0, 1, 1, 2, 2],
@@ -146,7 +148,7 @@ def get_impact_score(impact, likelihood):
     
     return score
 
-def get_longevity_score(days):
+def get_longevity_score(days: int):
     """
     5: Worst Score, new code, did not go to ape tax before
     4: Code has been live less than a month
@@ -164,7 +166,7 @@ def get_longevity_score(days):
         return 2
     return 1
 
-def get_tvl_impact(tvl):
+def get_tvl_impact(tvl: float):
     if tvl == 0:
         return 0
     if tvl < 1_000_000:
@@ -177,4 +179,15 @@ def get_tvl_impact(tvl):
         return 4
     return 5
 
+def format_score(score:int):
+    style = "white"
+    if score == 0:
+        return "N/A"
+    if score == 1:
+        style = "green"
+    if score == 2 or score == 3:
+        style = "yellow"
+    if score == 4 or score == 5:
+        style = "red"
 
+    return Text(str(score), style=style)

@@ -1,12 +1,14 @@
 import typer
-import os
 import time
-import json
+from functools import wraps
+from rich.text import Text
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.console import Console, Theme
-from functools import wraps
+
+# Utilities for displaying information on the command line
 
 app = typer.Typer()
+
 theme = Theme(
     {
         "success": "bold green",
@@ -19,9 +21,6 @@ theme = Theme(
 console = Console(theme=theme)
 
 cprint = console.print
-
-
-# General utility functions
 
 
 # Custom decorator for showing a spinner with a custom task description
@@ -49,36 +48,5 @@ def show_spinner(task_description):
     return decorator
 
 
-def get_or_create_cli_dir_path():
-    # Define the name of your hidden directory
-    cli_directory_name = ".pyrisk"
-
-    # Get the user's home directory
-    user_home_directory = os.path.expanduser("~")
-
-    # Create the hidden directory in the user's home directory
-    cli_directory_path = os.path.join(user_home_directory, cli_directory_name)
-    os.makedirs(cli_directory_path, exist_ok=True)
-
-    return cli_directory_path
-
-
-def current_timestamp():
-    return int(time.time() * 1000)
-
-
 def format_currency(value):
     return Text(f"${value:,.2f}", style="bold green")
-
-
-def save_to_json(data, filename):
-    """
-    Save data to a JSON file.
-
-    Args:
-        data: The data to be saved (should be JSON-serializable).
-        filename (str): The name of the output JSON file.
-    """
-    with open(filename, "w") as json_file:
-        json.dump(data, json_file, indent=4)
-    print(f"Data saved to {filename}")
