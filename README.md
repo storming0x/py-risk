@@ -39,27 +39,31 @@ pyrisk group list --network ethereum
 Show detail information about a risk group
 
 ```bash
-pyrisk group info <group-name> --network ethereum
+pyrisk group info <group-id> --network ethereum
+```
+
+List all strategies related to a risk group
+
+```bash
+pyrisk group strats <group-id> --network ethereum
 ```
 
 To generate an HTML file with the risk group map graph for the ethereum network (chain id = 1) you can use the following command. Check help for other supported networks.
 
 ```bash
-pyrisk group heatmap --network ethereum
+pyrisk group map --network ethereum
 ```
-
-TODO
 
 To show information about a specific strategy. Supports v2 and v3 strategies.
 
 ```bash
-pyrisk strategy <strategy-address> [OPTIONS]
+pyrisk strat info <strategy-address> [OPTIONS]
 ```
 
 To show information about a specific vault. Supports v2 and v3 Tokenized Strategies and Meta Vaults.
 
 ```bash
-pyrisk vault <vault-address> [OPTIONS]
+pyrisk vault info <vault-address> [OPTIONS]
 ```
 
 ## Development
