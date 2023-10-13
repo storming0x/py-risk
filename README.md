@@ -30,7 +30,7 @@ To get help on pyrisk usage on any command you can use
 pyrisk [command] --help
 ```
 
-List all risk groups in the ethereum network
+List all risk groups on the ethereum network
 
 ```bash
 pyrisk group list --network ethereum

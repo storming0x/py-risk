@@ -21,7 +21,7 @@ from pyrisk.display_utils import cprint, format_currency
 
 def list_groups(chain_id: int = 1, force_refresh=False) -> None:
     cprint(f"\nLoading groups for chain {Network.get_label(chain_id)}...", style="text")
-    title = f"\nRisk Groups in {Network.get_label(chain_id)}"
+    title = f"\nRisk Groups on {Network.get_label(chain_id)}"
     table = Table(title=title)
     table.add_column("Group", justify="left", style="cyan", no_wrap=True)
     table.add_column("TVL (USDC)", justify="right", style="green")

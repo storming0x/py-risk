@@ -5,7 +5,7 @@ from rich.text import Text
 from pyrisk.utils import get_or_create_cli_dir_path, current_timestamp
 
 cli_directory = get_or_create_cli_dir_path()
-# Create a disk-based cache on 10 minutes
+# Create a disk-based cache on users home directory
 cache_group = dc.Cache(cli_directory, expire=600)
 
 
@@ -26,8 +26,8 @@ def get_vaults_data(chainId: int, force_refresh=False):
     response = requests.get(url)
     risk_data = response.json()
 
-    # Store the data in the cache
-    cache_group[cache_key] = risk_data
+    # Store the data in the cache to expire in 10 minutes
+    cache_group.set(cache_key, risk_data, expire=600)
 
     return risk_data
 
