@@ -183,7 +183,7 @@ def show_heatmap(chain_id: int = 1, force_refresh=False) -> None:
 
         chart = heat + text
         # Get the current time with timezone information
-        current_time = datetime.datetime.now(datetime.timezone.utc)
+        current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         temp_f = f"heatmap_chain_{chain_id}_{current_time}"
         filename = "".join(c if c.isalnum() or c in ["_", "-"] else "_" for c in temp_f)
         filename += ".html"
